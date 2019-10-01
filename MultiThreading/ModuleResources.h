@@ -22,6 +22,8 @@ public:
 	Texture *yellow = nullptr;
 	Texture *mario = nullptr;
 	Texture *space = nullptr;
+	//Texture *space1 = nullptr;
+	//Texture *space = nullptr;
 	Texture *asteroid1 = nullptr;
 	Texture *asteroid2 = nullptr;
 	Texture *spacecraft1 = nullptr;

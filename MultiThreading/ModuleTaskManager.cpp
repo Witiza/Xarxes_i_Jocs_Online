@@ -3,34 +3,42 @@
 
 void ModuleTaskManager::threadMain()
 {
+	// TODO 3:
+	// - Wait for new tasks to arrive
+	// - Retrieve a task from scheduledTasks
+	// - Execute it
+	// - Insert it into finishedTasks
 	while (true)
 	{
-		// TODO 3:
-		// - Wait for new tasks to arrive
-		// - Retrieve a task from scheduledTasks
-		// - Execute it
-		// - Insert it into finishedTasks
-		Task* t = nullptr;
-		{
-			std::unique_lock<std::mutex> lock(mtx);
+			Task* t = nullptr;
+
 			while (t == nullptr)
 			{
+				 std::unique_lock<std::mutex> lock(mtx);
 				if (scheduledTasks.empty())
 				{
 					_event.wait(lock);
 				}
+			
 				else
 				{
 					t = scheduledTasks.front();
 					scheduledTasks.pop();
-
-					t->execute();
-
-					finishedTasks.push(t);
 				}
 			}
-		}
+
+			if (exitFlag)
+				break;
+
+			t->execute();
+
+			{
+				std::unique_lock<std::mutex> lock(mtx);
+				finishedTasks.push(t);
+			}
+		
 	}
+
 }
 
 bool ModuleTaskManager::init()
@@ -48,19 +56,29 @@ bool ModuleTaskManager::init()
 bool ModuleTaskManager::update()
 {
 	// TODO 4: Dispatch all finished tasks to their owner module (use Module::onTaskFinished() callback)
-	
-	while(!finishedTasks.empty())
+	if (!finishedTasks.empty())
 	{
-		auto item = finishedTasks.front();
-		item->owner->onTaskFinished(item);
-		finishedTasks.pop();
+		std::unique_lock<std::mutex> lock(mtx);
+		while (!finishedTasks.empty())
+		{
+
+			auto item = finishedTasks.front();
+			item->owner->onTaskFinished(item);
+			finishedTasks.pop();
+		}
 	}
-	
 	return true;
 }
 
 bool ModuleTaskManager::cleanUp()
 {
+	{
+		std::unique_lock<std::mutex> lock(mtx);
+		exitFlag = true;
+		_event.notify_all();
+	}
+
+	
 	// TODO 5: Notify all threads to finish and join them
 	for (int i = 0; i < MAX_THREADS; i++)
 	{

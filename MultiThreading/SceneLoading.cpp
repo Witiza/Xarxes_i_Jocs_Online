@@ -25,6 +25,7 @@ void SceneLoading::enable()
 void SceneLoading::update()
 {
 	progressBar->width = 750 * App->modResources->completionRatio;
+	printf("%f", App->modResources->completionRatio);
 
 	if (App->modResources->loadingFinished)
 	{
