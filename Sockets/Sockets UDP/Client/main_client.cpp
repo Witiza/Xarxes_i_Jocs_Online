@@ -29,23 +29,58 @@ void printWSErrorAndExit(const char *msg)
 
 void client(const char *serverAddrStr, int port)
 {
+	Sleep(500);
 	// TODO-1: Winsock init
-
-	// TODO-2: Create socket (IPv4, datagrams, UDP)
-
-	// TODO-3: Create an address object with the server address
-
-	while (true)
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != NO_ERROR)
 	{
-		// TODO-4:
-		// - Send a 'ping' packet to the server
-		// - Receive 'pong' packet from the server
-		// - Control errors in both cases
+		// Log and handle error
+		printWSErrorAndExit("Error initializing Client Winsock");
+		return;
 	}
 
-	// TODO-5: Close socket
+	// TODO-2: Create socket (IPv4, datagrams, UDP
+	SOCKET client_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-	// TODO-6: Winsock shutdown
+	// TODO-3: Force address reuse
+	sockaddr_in socket_address;
+	socket_address.sin_family = AF_INET;
+	socket_address.sin_port = htons(port);
+	const char *remoteAddrStr = serverAddrStr;
+	inet_pton(AF_INET, remoteAddrStr, &socket_address.sin_addr);
+
+	// TODO-4: Bind to a local address
+	bind(client_socket, (sockaddr*)&socket_address, sizeof(socket_address));
+
+	sockaddr_in from;
+	while (true)
+	{
+		char buffer[64];
+		sendto(client_socket, "yeet", sizeof("yeet"), 0, (sockaddr*)&socket_address, sizeof(socket_address));
+		Sleep(500);
+		// TODO-5:
+		// - Receive 'ping' packet from a remote host
+		// - Answer with a 'pong' packet
+		// - Control errors in both cases
+		int tolen = sizeof(socket_address);
+		int received = recvfrom(client_socket, buffer, 64, 0, (sockaddr*)&socket_address, &tolen);
+		
+			printf(buffer);
+		
+
+	}
+
+	// TODO-6: Close socket
+	closesocket(client_socket);
+	// TODO-7: Winsock shutdown
+	iResult = WSACleanup();
+	if (iResult != NO_ERROR)
+	{
+		// Log and handle error
+		printWSErrorAndExit("Error initializing Server Winsock");
+		return;
+	}
 }
 
 int main(int argc, char **argv)
