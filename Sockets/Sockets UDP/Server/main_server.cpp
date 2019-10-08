@@ -40,15 +40,26 @@ void server(int port)
 
 	// TODO-2: Create socket (IPv4, datagrams, UDP
 	SOCKET server_socket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (server_socket == INVALID_SOCKET)
+		printWSErrorAndExit("Error creating socket");
 
 	// TODO-3: Force address reuse
+	int enable = 1;
+	int res = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&enable, sizeof(int));
+	if (res == SOCKET_ERROR) {
+		printWSErrorAndExit("Error forcing adress reuse");
+	}
+
 	sockaddr_in socket_address;
 	socket_address.sin_family = AF_INET;
 	socket_address.sin_port = htons(port);
 	socket_address.sin_addr.S_un.S_addr = INADDR_ANY;
 
 	// TODO-4: Bind to a local address
-	//bind(server_socket, (sockaddr*)&socket_address, sizeof(socket_address));
+	
+	int result_bind = bind(server_socket, (sockaddr*)&socket_address, sizeof(socket_address));
+	if (result_bind != NO_ERROR)
+		printWSErrorAndExit("Error binding socket");
 
 	sockaddr_in from;
 	while (true)
@@ -60,11 +71,24 @@ void server(int port)
 		// - Control errors in both cases
 				// - Control errors in both cases
 		int tolen = sizeof(socket_address);
-		int received = recvfrom(server_socket, buffer, 64, 0, (sockaddr*)&socket_address, &tolen);
-
+		int result_received = recvfrom(server_socket, buffer, 64, 0, (sockaddr*)&socket_address, &tolen);
+		if (result_received == NO_ERROR && result_received != 0)
+		{
 			printf(buffer);
-			sendto(server_socket, "yoot", sizeof("yoot"), 0, (sockaddr*)&socket_address, sizeof(socket_address));
-		
+			int result_sent = sendto(server_socket, "yoot", sizeof("yoot"), 0, (sockaddr*)&socket_address, sizeof(socket_address));
+			if (result_sent != NO_ERROR)
+			{
+				printWSErrorAndExit("Error in the server sending a message");
+			}
+
+		}
+		else
+		{
+			int i = WSAGetLastError();
+
+			printWSErrorAndExit("Error in the server receiving a message");
+			break;
+		}
 		Sleep(500);
 	}
 

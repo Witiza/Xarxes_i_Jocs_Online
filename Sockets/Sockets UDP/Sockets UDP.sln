@@ -1,11 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets UDP - Client", "Client/Sockets UDP - Client.vcxproj", "{C078B962-D970-4F9B-94A9-9727E3BE8318}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets UDP - Client", "Client\Sockets UDP - Client.vcxproj", "{C078B962-D970-4F9B-94A9-9727E3BE8318}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets UDP - Server", "Server/Sockets UDP - Server.vcxproj", "{F611AC6C-4BDF-4344-A7A1-DCCF46101D26}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sockets UDP - Server", "Server\Sockets UDP - Server.vcxproj", "{F611AC6C-4BDF-4344-A7A1-DCCF46101D26}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C078B962-D970-4F9B-94A9-9727E3BE8318} = {C078B962-D970-4F9B-94A9-9727E3BE8318}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,5 +37,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {219FFBD9-7D88-4A9F-A132-E7A192C66E44}
 	EndGlobalSection
 EndGlobal

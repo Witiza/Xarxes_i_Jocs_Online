@@ -29,7 +29,6 @@ void printWSErrorAndExit(const char *msg)
 
 void client(const char *serverAddrStr, int port)
 {
-	Sleep(500);
 	// TODO-1: Winsock init
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -51,9 +50,8 @@ void client(const char *serverAddrStr, int port)
 	inet_pton(AF_INET, remoteAddrStr, &socket_address.sin_addr);
 
 	// TODO-4: Bind to a local address
-	bind(client_socket, (sockaddr*)&socket_address, sizeof(socket_address));
 
-	sockaddr_in from;
+
 	while (true)
 	{
 		char buffer[64];
