@@ -163,6 +163,36 @@ struct LogEntry {
 };
 LogEntry getLogEntry(uint32 entryIndex);
 
+/////////////////////////////////////////////////////////////////////////
+//ERROR HANDLING
+////////////////////////////////////////////////////////////////////////
+//BY: LORIEN
+
+void printWSErrorAndExit(const char *msg, ...)
+{
+	wchar_t *s = NULL;
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&s, 0, NULL);
+	fprintf(stderr, "%s: %S\n", msg, s);
+	printf("Shutting Down");
+	LocalFree(s);
+	system("pause"); 
+	exit(-1);
+}
+
+void printWSErrorAndContinue(const char* msg, ...)
+{
+	wchar_t *s = NULL;
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&s, 0, NULL);
+	fprintf(stderr, "%s: %S\n", msg, s);
+	printf("Carrying on with the app execution");
+	LocalFree(s);
+}
 
 ////////////////////////////////////////////////////////////////////////
 // MATH
