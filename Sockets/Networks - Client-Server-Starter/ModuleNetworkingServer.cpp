@@ -15,14 +15,14 @@ bool ModuleNetworkingServer::start(int port)
 	// - Bind the socket to a local interface
 	// - Enter in listen mode
 	// - Add the listenSocket to the managed list of sockets using addSocket()
-	SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s == INVALID_SOCKET) {
+	listenSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (listenSocket == INVALID_SOCKET) {
 		printWSErrorAndExit("Error creating Socket:   ");
 	}
 	LOG("Socket Done");
 
 	int enable = 1;
-	int result = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&enable, sizeof(int));
+	int result = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&enable, sizeof(int));
 	if (result == SOCKET_ERROR) {
 		printWSErrorAndExit("Error when using Setsockopt:   ");
 	}
@@ -35,20 +35,20 @@ bool ModuleNetworkingServer::start(int port)
 	serverAddr.sin_port = htons(port); // Port
 
 	// Bind socket
-	int bindRes = bind(s, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+	int bindRes = bind(listenSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
 	if (bindRes == SOCKET_ERROR) {
 		printWSErrorAndExit("Error when binding the server socket:   ");
 	}
 	LOG("Socket binding done");
 
 	// Listen
-	int listenRes = listen(s, 1);
+	int listenRes = listen(listenSocket, 1);
 	if (listenRes == SOCKET_ERROR) {
 		printWSErrorAndExit("listen");
 	}
 	LOG("Listen mode activated");
 
-	sockets.push_back(s);
+	sockets.push_back(listenSocket);
 
 	state = ServerState::Listening;
 

@@ -62,7 +62,39 @@ bool ModuleNetworking::preUpdate()
 	byte incomingDataBuffer[incomingDataBufferSize];
 
 	// TODO(jesus): select those sockets that have a read operation available
+	fd_set read_fd;
+	FD_ZERO(&read_fd);
+	for (auto s : sockets)
+	{
+		FD_SET(s, &read_fd);
+	}
 
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+
+	int result = select(0, &read_fd, nullptr, nullptr, &timeout);
+	if (result == SOCKET_ERROR)
+	{
+		printWSErrorAndExit("Error during the SELECT function");
+	}
+
+	for (auto s : sockets)
+	{
+		if (FD_ISSET(s, &read_fd))
+		{
+			if (isListenSocket(s))
+			{
+				int result = accept(s, (sockaddr*)&address, (int*)sizeof(address));
+				if (result > 0)
+				{
+					onSocketConnected(s, address);
+				}
+				else
+					printWSErrorAndContinue("Could not accept a socket");
+			}
+		}
+	}
 	// TODO(jesus): for those sockets selected, check wheter or not they are
 	// a listen socket or a standard socket and perform the corresponding
 	// operation (accept() an incoming connection or recv() incoming data,

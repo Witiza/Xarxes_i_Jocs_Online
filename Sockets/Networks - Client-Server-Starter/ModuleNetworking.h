@@ -33,6 +33,7 @@ private:
 
 protected:
 
+	sockaddr_in address;
 	std::vector<SOCKET> sockets;
 
 	void addSocket(SOCKET socket);
