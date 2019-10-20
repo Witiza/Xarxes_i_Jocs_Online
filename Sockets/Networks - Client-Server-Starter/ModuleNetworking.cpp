@@ -85,13 +85,31 @@ bool ModuleNetworking::preUpdate()
 		{
 			if (isListenSocket(s))
 			{
-				int result = accept(s, (sockaddr*)&address, (int*)sizeof(address));
-				if (result > 0)
+				int size = sizeof(address);
+				SOCKET new_s = accept(s, (sockaddr*)&address, &size);
+				if (new_s != INVALID_SOCKET)
 				{
-					onSocketConnected(s, address);
+					onSocketConnected(new_s, address);
 				}
 				else
 					printWSErrorAndContinue("Could not accept a socket");
+			}
+			else
+			{
+				int result = recv(s, (char*)incomingDataBuffer, incomingDataBufferSize,0);
+				if (result > 0)
+				{
+					onSocketReceivedData(s, incomingDataBuffer);
+				}
+				else if (result == 0 || WSAGetLastError() == WSAECONNRESET)
+				{
+					//Remove the socket from the list
+					onSocketDisconnected(s);
+					auto socket_to_remove = std::find(sockets.begin(), sockets.end(), s);
+					sockets.erase(socket_to_remove);
+				}
+				else
+					printWSErrorAndContinue("Error when receiving data from a socket");
 			}
 		}
 	}

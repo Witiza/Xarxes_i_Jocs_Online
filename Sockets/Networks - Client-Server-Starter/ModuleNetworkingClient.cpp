@@ -17,15 +17,14 @@ bool  ModuleNetworkingClient::start(const char * serverAddressStr, int serverPor
 	}
 	LOG("socket done");
 
-	struct sockaddr_in serverAddr;
-	const int serverAddrLen = sizeof(serverAddr);
-	serverAddr.sin_family = AF_INET; // IPv4
-	inet_pton(AF_INET, serverAddressStr, &serverAddr.sin_addr);
-	serverAddr.sin_port = htons(serverPort); // Port
+	const int serverAddrLen = sizeof(address);
+	address.sin_family = AF_INET; // IPv4
+	inet_pton(AF_INET, serverAddressStr, &address.sin_addr);
+	address.sin_port = htons(serverPort); // Port
 
-	int connectRes = connect(client_socket, (const sockaddr*)&serverAddr, serverAddrLen);
+	int connectRes = connect(client_socket, (const sockaddr*)&address, serverAddrLen);
 	if (connectRes == SOCKET_ERROR) {
-		printWSErrorAndExit("connect");
+		printWSErrorAndExit("Error connectiong to server");
 	}
 	LOG("Connection Done");
 
@@ -52,6 +51,7 @@ bool ModuleNetworkingClient::update()
 		if (result > 0)
 		{
 			LOG("Name: %s Sent",playerName.c_str());
+			state = ClientState::Logging;
 		}
 		else
 		{
@@ -59,6 +59,7 @@ bool ModuleNetworkingClient::update()
 			printWSErrorAndContinue("Error sending name %s to the server, continuing...", playerName.c_str());
 		}
 	}
+	
 
 	return true;
 }

@@ -29,13 +29,12 @@ bool ModuleNetworkingServer::start(int port)
 	LOG("setsockopt SO_REUSEADDR done");
 
 	// Address (server)
-	struct sockaddr_in serverAddr;
-	serverAddr.sin_family = AF_INET; // IPv4
-	serverAddr.sin_addr.S_un.S_addr = INADDR_ANY; // Any address
-	serverAddr.sin_port = htons(port); // Port
+	address.sin_family = AF_INET; // IPv4
+	address.sin_addr.S_un.S_addr = INADDR_ANY; // Any address
+	address.sin_port = htons(port); // Port
 
 	// Bind socket
-	int bindRes = bind(listenSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+	int bindRes = bind(listenSocket, (struct sockaddr *)&address, sizeof(address));
 	if (bindRes == SOCKET_ERROR) {
 		printWSErrorAndExit("Error when binding the server socket:   ");
 	}
@@ -48,7 +47,7 @@ bool ModuleNetworkingServer::start(int port)
 	}
 	LOG("Listen mode activated");
 
-	sockets.push_back(listenSocket);
+	addSocket(listenSocket);
 
 	state = ServerState::Listening;
 
@@ -117,6 +116,8 @@ bool ModuleNetworkingServer::isListenSocket(SOCKET socket) const
 void ModuleNetworkingServer::onSocketConnected(SOCKET socket, const sockaddr_in &socketAddress)
 {
 	// Add a new connected socket to the list
+	sockets.push_back(socket);
+
 	ConnectedSocket connectedSocket;
 	connectedSocket.socket = socket;
 	connectedSocket.address = socketAddress;
