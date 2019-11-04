@@ -54,7 +54,7 @@ bool ModuleUI::gui()
 		else if (entry.type == LOG_TYPE_DEBUG) {
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.3f, 1.0f, 1.0f));
 		}
-		ImGui::TextWrapped("%s", entry.message);
+		ImGui::TextWrapped("%s", entry.Message);
 		if (entry.type == LOG_TYPE_WARN ||
 			entry.type == LOG_TYPE_ERROR ||
 			entry.type == LOG_TYPE_DEBUG)

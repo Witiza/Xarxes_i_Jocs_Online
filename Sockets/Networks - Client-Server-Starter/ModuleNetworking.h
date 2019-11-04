@@ -15,7 +15,6 @@ private:
 
 	bool cleanUp() override;
 
-	static bool sendPacket(const OutputMemoryStream& packet, SOCKET socket);
 
 
 	//////////////////////////////////////////////////////////////////////
@@ -33,14 +32,19 @@ private:
 
 
 protected:
+	static bool sendPacket(const OutputMemoryStream& packet, SOCKET socket);
+
+	virtual void PrintMessages() = 0;
 
 	sockaddr_in address;
+
 	std::vector<SOCKET> sockets;
+	std::vector<Message*> messages;
 
 	void addSocket(SOCKET socket);
 
 	void disconnect();
 
-	static void reportError(const char *message);
+	static void reportError(const char *Message);
 };
 

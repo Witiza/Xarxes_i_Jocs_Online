@@ -26,7 +26,8 @@ private:
 
 	bool gui() override;
 
-
+	void PrintMessages() override;
+	bool sendMessage(MessageType type, char * message, ...);
 
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworking virtual methods
@@ -35,7 +36,6 @@ private:
 	void onSocketReceivedData(SOCKET socket, const InputMemoryStream& packet) override;
 
 	void onSocketDisconnected(SOCKET socket) override;
-
 
 
 	//////////////////////////////////////////////////////////////////////

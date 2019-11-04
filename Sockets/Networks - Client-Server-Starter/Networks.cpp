@@ -35,12 +35,12 @@ void log(const char file[], int line, int type, const char* format, ...)
 
 	// NOTE: There is a memory leak here, but we will need logs
 	// until the application finished, we will go with this...
-	char *message = new char[strlen(tmp_string2)+1];
-	lstrcpyA(message, tmp_string2);
+	char *Message = new char[strlen(tmp_string2)+1];
+	lstrcpyA(Message, tmp_string2);
 
 	LogEntry entry;
 	entry.type = type;
-	entry.message = message;
+	entry.Message = Message;
 	logLines.push_back(entry);
 }
 

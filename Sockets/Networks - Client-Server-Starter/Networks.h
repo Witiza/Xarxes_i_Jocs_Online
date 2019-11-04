@@ -159,7 +159,7 @@ void log(const char file[], int line, int type, const char* format, ...);
 uint32 getLogEntryCount();
 struct LogEntry {
 	int type;
-	const char *message;
+	const char *Message;
 };
 LogEntry getLogEntry(uint32 entryIndex);
 

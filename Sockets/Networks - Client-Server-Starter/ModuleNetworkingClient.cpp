@@ -51,16 +51,19 @@ bool ModuleNetworkingClient::update()
 	if (state == ClientState::Start)
 	{
 		// TODO(jesus): Send the player name to the server
-		int result = send(client_socket, playerName.c_str(), playerName.size() + 1, 0);
-		if (result > 0)
+		OutputMemoryStream packet;
+		packet << playerName;
+		packet << CL_HELLO;
+		packet << "Hello";
+
+		if (sendPacket(packet, client_socket))
 		{
-			LOG("Name: %s Sent",playerName.c_str());
 			state = ClientState::Logging;
 		}
 		else
 		{
-			int err = WSAGetLastError();
 			printWSErrorAndContinue("Error sending name %s to the server, continuing...", playerName.c_str());
+			disconnect();
 		}
 	}
 	
@@ -79,21 +82,103 @@ bool ModuleNetworkingClient::gui()
 		ImVec2 texSize(400.0f, 400.0f * tex->height / tex->width);
 		ImGui::Image(tex->shaderResource, texSize);
 
-		ImGui::Text("%s connected to the server...", playerName.c_str());
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar | ImGuiWindowFlags_AlwaysHorizontalScrollbar;
+		ImGui::BeginChild("Child1", ImVec2(ImGui::GetWindowContentRegionWidth(), ImGui::GetWindowContentRegionHeight() - (texSize.y+30)), false, window_flags);
+		PrintMessages();
+		ImGui::EndChild();
 
+		static char message[256];
+		if (ImGui::InputText("", message, 256, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::Button("Send"))
+		{
+			sendMessage(CL_STANDARD_MESSAGE, message);
+			memset(message, 0, sizeof(message));
+		}
 		ImGui::End();
 	}
 
 	return true;
 }
 
+void ModuleNetworkingClient::PrintMessages()
+{
+	for (auto item = messages.begin(); item != messages.end(); item++)
+	{
+		switch ((*item)->type)
+		{
+		case CL_HELLO:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+			ImGui::Text("%s Joined the server", (*item)->name.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		case CL_STANDARD_MESSAGE:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			ImGui::Text("%s: %s", (*item)->name.c_str(), (*item)->message.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		}
+
+	}
+}
+
+bool ModuleNetworkingClient::sendMessage(MessageType type, char * message, ...)
+{
+	bool ret = true;
+	std::string _message = message;
+	OutputMemoryStream packet;
+	packet << playerName;
+	packet << type;
+	packet << _message;
+
+
+	if (!sendPacket(packet, client_socket))
+	{
+		reportError("Error sending the message");
+		ret = false;
+	}
+	return ret;
+}
+
 void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemoryStream& packet)
 {
-	state = ClientState::Stopped;
+	Message* message = new Message;
+	packet >> message->name;
+	packet >> message->type;
+	packet >> message->message;
+
+	if (message->type == SE_UNABLE_TO_CONNECT)
+	{
+		reportError("Unable to connect to server, invalid name");
+		disconnect();
+	}
+	//if (message->type == SE_WELCOME)
+	//{
+	//	for (auto &connectedSocket : connectedSockets)
+	//	{
+	//		if (connectedSocket.socket == socket)
+	//		{
+	//			connectedSocket.playerName = message->name;
+	//			sendMessage(SE_WELCOME, connectedSocket.socket, "Welcome to the chat, %s", message->name.c_str());
+	//		}
+	//	}
+	//}
+	//else if (message->type == CL_STANDARD_MESSAGE)
+	//{
+	//	OutputMemoryStream out_packet;
+	//	out_packet << message->name;
+	//	out_packet << message->type;
+	//	out_packet << message->message;
+	//	broadcastPacket(out_packet);
+	//}
+	messages.push_back(message);
 }
 
 void ModuleNetworkingClient::onSocketDisconnected(SOCKET socket)
 {
 	state = ClientState::Stopped;
 }
+
 

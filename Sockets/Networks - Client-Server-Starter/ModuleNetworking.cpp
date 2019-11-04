@@ -33,6 +33,7 @@ void ModuleNetworking::disconnect()
 	}
 
 	sockets.clear();
+	messages.clear();
 }
 
 bool ModuleNetworking::init()
@@ -58,8 +59,7 @@ bool ModuleNetworking::preUpdate()
 	if (sockets.empty()) return true;
 
 	// NOTE(jesus): You can use this temporary buffer to store data from recv()
-	const uint32 incomingDataBufferSize = Kilobytes(1);
-	byte incomingDataBuffer[incomingDataBufferSize];
+	InputMemoryStream packet;
 
 	// TODO(jesus): select those sockets that have a read operation available
 	fd_set read_fd;
@@ -96,10 +96,11 @@ bool ModuleNetworking::preUpdate()
 			}
 			else
 			{
-				int result = recv(s, (char*)incomingDataBuffer, incomingDataBufferSize,0);
+				int result = recv(s, packet.GetBufferPtr(), packet.GetCapacity(),0);
 				if (result > 0)
 				{
-					onSocketReceivedData(s, incomingDataBuffer);
+					packet.SetSize((uint32)result);
+					onSocketReceivedData(s, packet);
 				}
 				else if (result == 0 || WSAGetLastError() == WSAECONNRESET)
 				{

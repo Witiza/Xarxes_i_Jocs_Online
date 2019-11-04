@@ -96,10 +96,64 @@ bool ModuleNetworkingServer::gui()
 			ImGui::Text("Player name: %s", connectedSocket.playerName.c_str());
 		}
 
+		PrintMessages();
+
 		ImGui::End();
 	}
 
 	return true;
+}
+
+void ModuleNetworkingServer::PrintMessages()
+{
+	for (auto item = messages.begin(); item != messages.end(); item++)
+	{
+		switch ((*item)->type)
+		{
+		case CL_HELLO:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+			ImGui::Text("%s Joined the server", (*item)->name.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		case CL_STANDARD_MESSAGE:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+			ImGui::Text("%s: %s", (*item)->name.c_str(), (*item)->message.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		}
+
+	}
+}
+
+bool ModuleNetworkingServer::sendMessage(MessageType type, SOCKET s, const char * message, ...)
+{
+	bool ret = true;
+	std::string _message = message;
+	OutputMemoryStream packet;
+	packet << std::string("SYSTEM");
+	packet << type;
+	packet << _message;
+
+
+	if (!sendPacket(packet, s))
+	{
+		reportError("Error sending the message");
+		ret = false;
+	}
+	return ret;
+}
+
+bool ModuleNetworkingServer::broadcastPacket(OutputMemoryStream& packet)
+{
+	for (auto &connectedSocket : connectedSockets)
+	{
+		sendPacket(packet, connectedSocket.socket);
+	}
+	return false;
 }
 
 
@@ -126,14 +180,41 @@ void ModuleNetworkingServer::onSocketConnected(SOCKET socket, const sockaddr_in 
 
 void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemoryStream& packet)
 {
-	// Set the player name of the corresponding connected socket proxy
-	for (auto &connectedSocket : connectedSockets)
+	Message* message = new Message;
+	packet >> message->name;
+	packet >>message->type;
+	packet >> message->message;
+
+	if (message->type == CL_HELLO)
 	{
-		if (connectedSocket.socket == socket)
+		if (!checkAvailability(message->name))
 		{
-			connectedSocket.playerName = (const char *)packet.Read;
+			sendMessage(SE_UNABLE_TO_CONNECT, socket, "Unable to join server");
+			return;
 		}
+		for (auto &connectedSocket : connectedSockets)
+		{
+			if (connectedSocket.socket == socket)
+			{
+				connectedSocket.playerName = message->name;
+				sendMessage(SE_WELCOME, connectedSocket.socket, "Welcome to the chat, %s", message->name.c_str());
+			}
+		}
+		OutputMemoryStream out_packet;
+		out_packet << message->name;
+		out_packet << message->type;
+		out_packet << message->message;
+		broadcastPacket(out_packet);
 	}
+	else if (message->type == CL_STANDARD_MESSAGE)
+	{
+		OutputMemoryStream out_packet;
+		out_packet << message->name;
+		out_packet << message->type;
+		out_packet << message->message;
+		broadcastPacket(out_packet);
+	}
+	messages.push_back(message);
 }
 
 void ModuleNetworkingServer::onSocketDisconnected(SOCKET socket)
@@ -148,5 +229,18 @@ void ModuleNetworkingServer::onSocketDisconnected(SOCKET socket)
 			break;
 		}
 	}
+}
+
+bool ModuleNetworkingServer::checkAvailability(std::string & name)
+{
+	bool ret = true;
+	if (name == "SYSTEM" || name == "system" || name == "System")
+		ret = false;
+	for (auto connectedSocket : connectedSockets)
+	{
+		if (connectedSocket.playerName == name)
+			ret = false;
+	}
+	return ret;
 }
 

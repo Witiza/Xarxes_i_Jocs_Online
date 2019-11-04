@@ -26,8 +26,9 @@ private:
 
 	bool gui() override;
 
-
-
+	void PrintMessages() override;
+	bool sendMessage(MessageType type, SOCKET s, const char * message, ...);
+	bool broadcastPacket(OutputMemoryStream &packet);
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworking virtual methods
 	//////////////////////////////////////////////////////////////////////
@@ -40,6 +41,7 @@ private:
 
 	void onSocketDisconnected(SOCKET socket) override;
 
+	bool checkAvailability(std::string& name);
 
 
 	//////////////////////////////////////////////////////////////////////
