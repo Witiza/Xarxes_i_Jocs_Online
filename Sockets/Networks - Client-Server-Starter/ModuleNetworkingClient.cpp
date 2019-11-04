@@ -23,16 +23,20 @@ bool  ModuleNetworkingClient::start(const char * serverAddressStr, int serverPor
 	address.sin_port = htons(serverPort); // Port
 
 	int connectRes = connect(client_socket, (const sockaddr*)&address, serverAddrLen);
-	if (connectRes == SOCKET_ERROR) {
-		printWSErrorAndExit("Error connectiong to server");
+	if (connectRes != SOCKET_ERROR) {
+		LOG("Connection Done");
+		state = ClientState::Start;
+		addSocket(client_socket);
 	}
-	LOG("Connection Done");
+	else
+	{
+		printWSErrorAndContinue("Error connectiong to server");
 
-	addSocket(client_socket);
+	}
+	
 
 
 	// If everything was ok... change the state
-	state = ClientState::Start;
 
 	return true;
 }
