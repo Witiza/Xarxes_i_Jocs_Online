@@ -27,7 +27,7 @@ private:
 	bool gui() override;
 
 	void PrintMessages() override;
-	bool sendMessage(MessageType type, SOCKET s, const char * message, ...);
+	bool sendMessage(MessageType type, SOCKET s, const char * message, std::string user = "SYSTEM");
 	bool broadcastPacket(OutputMemoryStream &packet);
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworking virtual methods
@@ -43,7 +43,9 @@ private:
 
 	bool checkAvailability(std::string& name);
 
+	void HandleCommands(Message* message);
 
+	void SendMessageToUser(std::string& user, std::string message,MessageType type,std::string sender = "SYSTEM");
 	//////////////////////////////////////////////////////////////////////
 	// State
 	//////////////////////////////////////////////////////////////////////

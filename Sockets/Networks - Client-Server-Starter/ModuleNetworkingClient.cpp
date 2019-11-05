@@ -93,6 +93,8 @@ bool ModuleNetworkingClient::gui()
 			sendMessage(CL_STANDARD_MESSAGE, message);
 			memset(message, 0, sizeof(message));
 		}
+		if (ImGui::IsItemHovered() || (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
+			ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 		ImGui::End();
 	}
 
@@ -119,6 +121,34 @@ void ModuleNetworkingClient::PrintMessages()
 			ImGui::PopStyleColor();
 			break;
 		}
+		case SE_WELCOME:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.5f, 1.0f));
+			ImGui::Text("Welcome %s to the server", (*item)->name.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		case CL_WHISPER:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, .5f, 1.0f, 1.0f));
+			ImGui::Text("%s whispers: %s", (*item)->name.c_str(), (*item)->message.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		case SE_SYSTEM_MSG:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, .5f, .5f, 1.0f));
+			ImGui::Text("%s: %s", (*item)->name.c_str(), (*item)->message.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
+		case SE_ERROR:
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, .0f, .0f, 1.0f));
+			ImGui::Text("%s: %s", (*item)->name.c_str(), (*item)->message.c_str());
+			ImGui::PopStyleColor();
+			break;
+		}
 		}
 
 	}
@@ -130,7 +160,11 @@ bool ModuleNetworkingClient::sendMessage(MessageType type, char * message, ...)
 	std::string _message = message;
 	OutputMemoryStream packet;
 	packet << playerName;
-	packet << type;
+	if (message[0] == '/')
+		packet << CL_COMMAND;
+	else
+		packet << type;
+
 	packet << _message;
 
 
@@ -151,28 +185,11 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 
 	if (message->type == SE_UNABLE_TO_CONNECT)
 	{
-		reportError("Unable to connect to server, invalid name");
+		ELOG("Unable to connect to server, invalid name");
+		state = ClientState::Stopped;
 		disconnect();
 	}
-	//if (message->type == SE_WELCOME)
-	//{
-	//	for (auto &connectedSocket : connectedSockets)
-	//	{
-	//		if (connectedSocket.socket == socket)
-	//		{
-	//			connectedSocket.playerName = message->name;
-	//			sendMessage(SE_WELCOME, connectedSocket.socket, "Welcome to the chat, %s", message->name.c_str());
-	//		}
-	//	}
-	//}
-	//else if (message->type == CL_STANDARD_MESSAGE)
-	//{
-	//	OutputMemoryStream out_packet;
-	//	out_packet << message->name;
-	//	out_packet << message->type;
-	//	out_packet << message->message;
-	//	broadcastPacket(out_packet);
-	//}
+
 	messages.push_back(message);
 }
 

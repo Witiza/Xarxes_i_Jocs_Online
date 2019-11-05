@@ -129,15 +129,15 @@ void ModuleNetworkingServer::PrintMessages()
 	}
 }
 
-bool ModuleNetworkingServer::sendMessage(MessageType type, SOCKET s, const char * message, ...)
+bool ModuleNetworkingServer::sendMessage(MessageType type, SOCKET s, const char * message,std::string user)
 {
 	bool ret = true;
+
 	std::string _message = message;
 	OutputMemoryStream packet;
-	packet << std::string("SYSTEM");
+	packet << user;
 	packet << type;
 	packet << _message;
-
 
 	if (!sendPacket(packet, s))
 	{
@@ -149,11 +149,13 @@ bool ModuleNetworkingServer::sendMessage(MessageType type, SOCKET s, const char 
 
 bool ModuleNetworkingServer::broadcastPacket(OutputMemoryStream& packet)
 {
+	bool ret = true;
 	for (auto &connectedSocket : connectedSockets)
 	{
-		sendPacket(packet, connectedSocket.socket);
+		if (!sendPacket(packet, connectedSocket.socket))
+			ret = false;
 	}
-	return false;
+	return ret;
 }
 
 
@@ -197,7 +199,8 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 			if (connectedSocket.socket == socket)
 			{
 				connectedSocket.playerName = message->name;
-				sendMessage(SE_WELCOME, connectedSocket.socket, "Welcome to the chat, %s", message->name.c_str());
+				std::string tmp_message = ("Welcome to the chat, %s", message->name.c_str());
+				sendMessage(SE_WELCOME, connectedSocket.socket, tmp_message.c_str());
 			}
 		}
 		OutputMemoryStream out_packet;
@@ -213,6 +216,10 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 		out_packet << message->type;
 		out_packet << message->message;
 		broadcastPacket(out_packet);
+	}
+	else if (message->type == CL_COMMAND)
+	{
+		HandleCommands(message);
 	}
 	messages.push_back(message);
 }
@@ -242,5 +249,48 @@ bool ModuleNetworkingServer::checkAvailability(std::string & name)
 			ret = false;
 	}
 	return ret;
+}
+
+void ModuleNetworkingServer::HandleCommands(Message* message)
+{
+	std::string tmp_message = message->message;
+	if (tmp_message.substr(1, 4) == "help ")
+	{
+		SendMessageToUser(message->name, "/help to ask for existing commands", SE_SYSTEM_MSG);
+		SendMessageToUser(message->name, "/whisper to send a private message to a user",SE_SYSTEM_MSG);
+
+	}
+	else if (tmp_message.substr(1, 8) == "whisper ")
+	{
+		std::string whispered = tmp_message.substr(9, tmp_message.size());
+		whispered = whispered.substr(0, whispered.find_first_of(" "));
+		std::string _message = tmp_message.substr(10+whispered.size(), tmp_message.size());
+		SendMessageToUser(whispered, _message, CL_WHISPER, message->name);
+	}
+	else
+		SendMessageToUser(message->name,"Unknown Command. Type /help to check the list of avalible commands", SE_ERROR)
+}
+
+void ModuleNetworkingServer::SendMessageToUser(std::string& user, std::string message, MessageType type, std::string sender)
+{
+	for (auto it = connectedSockets.begin(); it != connectedSockets.end(); ++it)
+	{
+		auto& connectedSocket = *it;
+		if (connectedSocket.playerName == user)
+		{
+			sendMessage(type, connectedSocket.socket, message.c_str(), sender);
+			return;
+		}
+	}
+	for (auto it = connectedSockets.begin(); it != connectedSockets.end(); ++it)
+	{
+		auto& connectedSocket = *it;
+		if (connectedSocket.playerName == sender)
+		{
+			std::string tmp = ("Couldn't find user %s", user.c_str());
+			sendMessage(SE_ERROR, connectedSocket.socket,tmp.c_str());
+			return;
+		}
+	}
 }
 
