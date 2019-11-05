@@ -199,7 +199,7 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 			if (connectedSocket.socket == socket)
 			{
 				connectedSocket.playerName = message->name;
-				std::string tmp_message = ("Welcome to the chat, %s", message->name.c_str());
+				std::string tmp_message = "Welcome to the chat " + message->name;
 				sendMessage(SE_WELCOME, connectedSocket.socket, tmp_message.c_str());
 			}
 		}
@@ -254,21 +254,19 @@ bool ModuleNetworkingServer::checkAvailability(std::string & name)
 void ModuleNetworkingServer::HandleCommands(Message* message)
 {
 	std::string tmp_message = message->message;
-	if (tmp_message.substr(1, 4) == "help ")
+	if (tmp_message.substr(1, 4) == "help")
 	{
-		SendMessageToUser(message->name, "/help to ask for existing commands", SE_SYSTEM_MSG);
-		SendMessageToUser(message->name, "/whisper to send a private message to a user",SE_SYSTEM_MSG);
-
+		SendMessageToUser(message->name, "/help to ask for existing commands \n/whisper to send a private message to a user ", SE_SYSTEM_MSG);
 	}
 	else if (tmp_message.substr(1, 8) == "whisper ")
 	{
 		std::string whispered = tmp_message.substr(9, tmp_message.size());
 		whispered = whispered.substr(0, whispered.find_first_of(" "));
-		std::string _message = tmp_message.substr(10+whispered.size(), tmp_message.size());
+		std::string _message = tmp_message.substr(10 + whispered.size(), tmp_message.size());
 		SendMessageToUser(whispered, _message, CL_WHISPER, message->name);
 	}
 	else
-		SendMessageToUser(message->name,"Unknown Command. Type /help to check the list of avalible commands", SE_ERROR)
+		SendMessageToUser(message->name, "Unknown Command. Type /help to check the list of avalible commands", SE_ERROR);
 }
 
 void ModuleNetworkingServer::SendMessageToUser(std::string& user, std::string message, MessageType type, std::string sender)

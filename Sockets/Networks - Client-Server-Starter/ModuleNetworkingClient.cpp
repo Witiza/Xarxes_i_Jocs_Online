@@ -124,7 +124,8 @@ void ModuleNetworkingClient::PrintMessages()
 		case SE_WELCOME:
 		{
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.5f, 1.0f));
-			ImGui::Text("Welcome %s to the server", (*item)->name.c_str());
+			ImGui::Text("%s: %s", (*item)->name.c_str(), (*item)->message.c_str());
+
 			ImGui::PopStyleColor();
 			break;
 		}
